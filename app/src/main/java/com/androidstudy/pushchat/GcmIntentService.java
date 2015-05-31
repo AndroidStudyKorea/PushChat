@@ -66,7 +66,8 @@ public class GcmIntentService extends IntentService {
             // If it's a regular GCM message, do some work.
             } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
                 // Post notification of received message.
-                sendNotification("Received: " + extras.toString());
+                //sendNotification("Received: " + extras.toString());
+                sendNotification(extras.getString("msg"));
                 Log.i(TAG, "Received: " + extras.toString());
             }
         }
@@ -87,7 +88,8 @@ public class GcmIntentService extends IntentService {
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
         .setSmallIcon(R.mipmap.ic_launcher)
-        .setContentTitle("GCM Notification")
+         .setTicker("티커 티커 티커 티커")
+        .setContentTitle("제목 제목 제목 제목 제목 제목")
         .setStyle(new NotificationCompat.BigTextStyle()
         .bigText(msg))
         .setContentText(msg);
