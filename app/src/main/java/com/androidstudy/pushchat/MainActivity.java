@@ -24,8 +24,12 @@ import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.Sender;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
+import org.w3c.dom.Text;
+
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 
 
@@ -129,6 +133,7 @@ public class MainActivity extends ActionBarActivity {
             protected Object doInBackground(Object[] objects) {
                 Sender sender = new Sender(API_KEY);
                 Message message = new Message.Builder()
+                        //.addData("sender", );
                         .addData("msg", msg)
                         .build();
                 try {
@@ -141,17 +146,24 @@ public class MainActivity extends ActionBarActivity {
         }.execute();
 
         View item = View.inflate(this, R.layout.item_chat, null);
+
+        // 날짜 및 시간
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd aa hh:mm:ss");
+        TextView lblDatetime = (TextView)item.findViewById(R.id.lblDatetime);
+        lblDatetime.setText(formatter.format(System.currentTimeMillis()));
+
+        // 메시지
         TextView lblMessage = (TextView)item.findViewById(R.id.lblMessage);
         lblMessage.setText(msg);
 
         LinearLayout layoutChatList = (LinearLayout)findViewById(R.id.layoutChatList);
         layoutChatList.addView(item);
 
-        scrollChatList.postDelayed(new Runnable() {
+        scrollChatList.post(new Runnable() {
             public void run() {
                 scrollChatList.fullScroll(ScrollView.FOCUS_DOWN);
             }
-        }, 500);
+        });
     }
 
     @Override
