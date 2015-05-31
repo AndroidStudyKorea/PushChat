@@ -14,6 +14,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
 
 import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.Sender;
@@ -30,8 +35,10 @@ public class MainActivity extends ActionBarActivity {
 
     String SENDER_ID = "171794693509";
 
+    ScrollView scrollChatList;
+
     GoogleCloudMessaging gcm;
-    String regid;
+    String regid, mTargetRegId;
 
     public static final int NOTIFICATION_ID = 1;
     private NotificationManager mNotificationManager;
@@ -42,6 +49,8 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        scrollChatList = (ScrollView)findViewById(R.id.scrollChatList);
 
         gcm = GoogleCloudMessaging.getInstance(this);
         registerInBackground();
@@ -89,7 +98,7 @@ public class MainActivity extends ActionBarActivity {
     public void onClick(View view) {
         if (view.getId() == R.id.btnSelect) {
 
-            ArrayList<String> nameList = new ArrayList<String>();
+            final ArrayList<String> nameList = new ArrayList<String>();
             for (String name : mTargetList.keySet())
                 nameList.add(name);
 
@@ -97,19 +106,22 @@ public class MainActivity extends ActionBarActivity {
             builder.setTitle("Select Target");
             builder.setItems(nameList.toArray(new String[0]), new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
+                    String targetName = nameList.get(which);
+                    Button btnSelect = (Button)findViewById(R.id.btnSelect);
+                    btnSelect.setText(targetName);
+                    mTargetRegId = mTargetList.get(targetName);
                 }
             });
             builder.show();
         }
         else if (view.getId() == R.id.btnSend) {
             Log.i(TAG, "Push button clicked!");
-            sendPush("안녕하세요. 테스트입니다!");
+            EditText edtContent = (EditText)findViewById(R.id.edtContent);
+            sendPush(edtContent.getText().toString());
         }
     }
 
     public static String API_KEY = "AIzaSyDKSIu5JIw_E27pAarcQDnSe2QAM4A8J48";
-    // 여기에 상대방의 Registration ID를 넣음
-    public static String TARGET_REG_ID = "APA91bHxxF-D-xDoFzaFC0BRkVxs05Dxa43X-uj2S_-1_JAjij-nTNgds7tJfGXiSoq-oVaH4c2fXbB6dgH44WrAVGEy-41IjluERGkXL29Ilk6o6mwW7CboYAzEt27ty11BN3dXMxpzO2W0tdNR2gZh7ocmama90w";
 
     public void sendPush(final String msg) {
         new AsyncTask() {
@@ -120,13 +132,26 @@ public class MainActivity extends ActionBarActivity {
                         .addData("msg", msg)
                         .build();
                 try {
-                    sender.send(message, TARGET_REG_ID, 0);
+                    sender.send(message, mTargetRegId, 0);
                 } catch (IOException e) {
                     Log.e(TAG, e.toString());
                 }
                 return null;
             }
         }.execute();
+
+        View item = View.inflate(this, R.layout.item_chat, null);
+        TextView lblMessage = (TextView)item.findViewById(R.id.lblMessage);
+        lblMessage.setText(msg);
+
+        LinearLayout layoutChatList = (LinearLayout)findViewById(R.id.layoutChatList);
+        layoutChatList.addView(item);
+
+        scrollChatList.postDelayed(new Runnable() {
+            public void run() {
+                scrollChatList.fullScroll(ScrollView.FOCUS_DOWN);
+            }
+        }, 500);
     }
 
     @Override
