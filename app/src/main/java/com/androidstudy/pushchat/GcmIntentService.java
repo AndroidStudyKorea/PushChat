@@ -24,6 +24,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Message;
 import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -66,9 +67,18 @@ public class GcmIntentService extends IntentService {
             // If it's a regular GCM message, do some work.
             } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
                 // Post notification of received message.
-                //sendNotification("Received: " + extras.toString());
-                sendNotification(extras.getString("msg"));
                 Log.i(TAG, "Received: " + extras.toString());
+                TalkModel talk = new TalkModel();
+                talk.author = extras.getString("author");
+                talk.created = extras.getString("created");
+                talk.content = extras.getString("content");
+                if (MainActivity.mThis != null) {
+                    Message msg = MainActivity.mThis.mHandler.obtainMessage();
+                    msg.obj = talk;
+                    MainActivity.mThis.mHandler.sendMessage(msg);
+                }
+                else
+                    sendNotification(talk.content);
             }
         }
         // Release the wake lock provided by the WakefulBroadcastReceiver.
@@ -88,11 +98,12 @@ public class GcmIntentService extends IntentService {
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
         .setSmallIcon(R.mipmap.ic_launcher)
-         .setTicker("티커 티커 티커 티커")
-        .setContentTitle("제목 제목 제목 제목 제목 제목")
+         .setTicker("메시지가 도착했습니다.")
+        .setContentTitle("신규 메시지")
         .setStyle(new NotificationCompat.BigTextStyle()
         .bigText(msg))
-        .setContentText(msg);
+        .setContentText(msg)
+        .setAutoCancel(true);
 
         mBuilder.setContentIntent(contentIntent);
         mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());

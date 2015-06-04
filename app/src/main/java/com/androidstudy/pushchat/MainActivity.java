@@ -2,42 +2,43 @@ package com.androidstudy.pushchat;
 
 import android.app.AlertDialog;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.support.v4.app.NotificationCompat;
+import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.Sender;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
-import org.w3c.dom.Text;
-
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
-
 
 public class MainActivity extends ActionBarActivity {
 
     static final String TAG = "GCM_Demo";
 
+    public static MainActivity mThis = null;
+    public Handler mHandler;
+
     String SENDER_ID = "171794693509";
+    String MY_NICK = "스노야";
 
     ScrollView scrollChatList;
 
@@ -60,11 +61,37 @@ public class MainActivity extends ActionBarActivity {
         registerInBackground();
 
         initalizeTargetList();
+
+        mHandler = new Handler()
+        {
+            public void handleMessage(android.os.Message msg)
+            {
+                Log.d(TAG, "handleMessage");
+                if (msg.obj != null) {
+                    TalkModel talk = (TalkModel)msg.obj;
+                    createTalk(false, talk.author, talk.created, talk.content);
+                }
+            }
+        };
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mThis = this;
+        MyApp.activityResumed();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mThis = null;
+        MyApp.activityPaused();
     }
 
     private void initalizeTargetList()
     {
-        mTargetList.put("스노야", "APA91bHxxF-D-xDoFzaFC0BRkVxs05Dxa43X-uj2S_-1_JAjij-nTNgds7tJfGXiSoq-oVaH4c2fXbB6dgH44WrAVGEy-41IjluERGkXL29Ilk6o6mwW7CboYAzEt27ty11BN3dXMxpzO2W0tdNR2gZh7ocmama90w");
+        //mTargetList.put("스노야", "APA91bHxxF-D-xDoFzaFC0BRkVxs05Dxa43X-uj2S_-1_JAjij-nTNgds7tJfGXiSoq-oVaH4c2fXbB6dgH44WrAVGEy-41IjluERGkXL29Ilk6o6mwW7CboYAzEt27ty11BN3dXMxpzO2W0tdNR2gZh7ocmama90w");
         mTargetList.put("멜트", "APA91bH0zkR6P0PtKboTE3xOOM5Ssib3tDFVrzHhBMM_d4iyWs_y9EsUurznqnipxKdbWGLjdgV2s4bK71ORl8_1bjqPmAon8AOMDGLugFYxK8BNEb759qdFuInmwupw7UQDLtErK4L57yPEYToKxvXjw006DS7O7A");
         mTargetList.put("에이든", "APA91bFDqjJ-N1EtEehf841I1Ha0nxkdi_iWnqr8sLx_h9X9wldhmCTj32WWRflb8Jkt_iJ_T2MHU6T6xcSZIVIJdaltlSdmlBB6wSmAM-PCgD0z2_vdG59VUYn6g1-Gqsc2r5jkDoW7Yx-6wqANzhaByiqtPKlO-A");
         mTargetList.put("권터", "APA91bGYEDi_ZPEC6T2lGPxUAls90ASSAqjDF2zB9lPYNmSKQMzh3gJssuyz04GxK1DQT7RNVSs5T3nbJme_VaTkXST0DI6y_baUtN4PMLcRHh8dj7dIU0vIZvMwUk5q1_6BB4u32F17PSlJSNhMLylhfOdqja0nNg");
@@ -120,21 +147,28 @@ public class MainActivity extends ActionBarActivity {
         }
         else if (view.getId() == R.id.btnSend) {
             Log.i(TAG, "Push button clicked!");
+            if (mTargetRegId == null) {
+                Toast toast = Toast.makeText(this, "대상을 지정해 주세요.", Toast.LENGTH_LONG);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                toast.show();
+                return;
+            }
             EditText edtContent = (EditText)findViewById(R.id.edtContent);
             sendPush(edtContent.getText().toString());
+            edtContent.setText("");
         }
     }
 
     public static String API_KEY = "AIzaSyDKSIu5JIw_E27pAarcQDnSe2QAM4A8J48";
 
-    public void sendPush(final String msg) {
+    public void sendPush(final String content) {
         new AsyncTask() {
             @Override
             protected Object doInBackground(Object[] objects) {
                 Sender sender = new Sender(API_KEY);
                 Message message = new Message.Builder()
-                        //.addData("sender", );
-                        .addData("msg", msg)
+                        .addData("author", MY_NICK)
+                        .addData("content", content)
                         .build();
                 try {
                     sender.send(message, mTargetRegId, 0);
@@ -145,16 +179,45 @@ public class MainActivity extends ActionBarActivity {
             }
         }.execute();
 
+        createTalk(true, MY_NICK, null, content);
+    }
+
+    public void createTalk(boolean myTalk, String author, String created, String content)
+    {
         View item = View.inflate(this, R.layout.item_chat, null);
 
+        LinearLayout layoutChat = (LinearLayout)item.findViewById(R.id.layoutChat);
+        if (myTalk) {
+            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams)layoutChat.getLayoutParams();
+            lp.gravity = Gravity.RIGHT;
+            lp.leftMargin = DisplayUtil.PixelFromDP(50);
+            lp.rightMargin = 0;
+            layoutChat.setLayoutParams(lp);
+            layoutChat.setBackgroundResource(R.drawable.shape_talk_my);
+        }
+        else {
+            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams)layoutChat.getLayoutParams();
+            lp.gravity = Gravity.LEFT;
+            lp.leftMargin = 0;
+            lp.rightMargin = DisplayUtil.PixelFromDP(50);
+            layoutChat.setLayoutParams(lp);
+            layoutChat.setBackgroundResource(R.drawable.shape_talk_others);
+        }
+
+        // 작성자
+        if (author != null) {
+            TextView lblAuthor = (TextView)item.findViewById(R.id.lblAuthor);
+            lblAuthor.setText(author);
+        }
+
         // 날짜 및 시간
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd aa hh:mm:ss");
+        SimpleDateFormat formatter = new SimpleDateFormat("MM-dd aa hh:mm:ss");
         TextView lblDatetime = (TextView)item.findViewById(R.id.lblDatetime);
         lblDatetime.setText(formatter.format(System.currentTimeMillis()));
 
         // 메시지
         TextView lblMessage = (TextView)item.findViewById(R.id.lblMessage);
-        lblMessage.setText(msg);
+        lblMessage.setText(content);
 
         LinearLayout layoutChatList = (LinearLayout)findViewById(R.id.layoutChatList);
         layoutChatList.addView(item);
