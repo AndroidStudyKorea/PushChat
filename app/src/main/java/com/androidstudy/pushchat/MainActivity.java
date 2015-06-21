@@ -1,9 +1,6 @@
 package com.androidstudy.pushchat;
 
-import android.app.AlertDialog;
 import android.app.NotificationManager;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
@@ -13,20 +10,17 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.Sender;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -40,21 +34,21 @@ public class MainActivity extends ActionBarActivity {
     String SENDER_ID = "171794693509";
     String MY_NICK = "스노야";
 
+    LinearLayout layoutChatList;
     ScrollView scrollChatList;
 
     GoogleCloudMessaging gcm;
-    String regid, mTargetRegId;
-
-    public static final int NOTIFICATION_ID = 1;
-    private NotificationManager mNotificationManager;
+    String regid;
 
     HashMap<String, String> mTargetList = new HashMap<String, String>();
+    ArrayList<String> mTargetRegIdList = new ArrayList<String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_old_main);
 
+        layoutChatList = (LinearLayout)findViewById(R.id.layoutChatList);
         scrollChatList = (ScrollView)findViewById(R.id.scrollChatList);
 
         gcm = GoogleCloudMessaging.getInstance(this);
@@ -68,11 +62,16 @@ public class MainActivity extends ActionBarActivity {
             {
                 Log.d(TAG, "handleMessage");
                 if (msg.obj != null) {
-                    TalkModel talk = (TalkModel)msg.obj;
-                    createTalk(false, talk.author, talk.created, talk.content);
+                    addTalk((TalkModel) msg.obj);
+                    scrollDown();
                 }
             }
         };
+
+        ArrayList<TalkModel> talkList = MyApp.dbHelper.getLalkLog();
+        for (TalkModel talk : talkList)
+            addTalk(talk);
+        scrollDown();
     }
 
     @Override
@@ -91,18 +90,21 @@ public class MainActivity extends ActionBarActivity {
 
     private void initalizeTargetList()
     {
-        //mTargetList.put("스노야", "APA91bHxxF-D-xDoFzaFC0BRkVxs05Dxa43X-uj2S_-1_JAjij-nTNgds7tJfGXiSoq-oVaH4c2fXbB6dgH44WrAVGEy-41IjluERGkXL29Ilk6o6mwW7CboYAzEt27ty11BN3dXMxpzO2W0tdNR2gZh7ocmama90w");
-        mTargetList.put("멜트", "APA91bH0zkR6P0PtKboTE3xOOM5Ssib3tDFVrzHhBMM_d4iyWs_y9EsUurznqnipxKdbWGLjdgV2s4bK71ORl8_1bjqPmAon8AOMDGLugFYxK8BNEb759qdFuInmwupw7UQDLtErK4L57yPEYToKxvXjw006DS7O7A");
-        mTargetList.put("에이든", "APA91bFDqjJ-N1EtEehf841I1Ha0nxkdi_iWnqr8sLx_h9X9wldhmCTj32WWRflb8Jkt_iJ_T2MHU6T6xcSZIVIJdaltlSdmlBB6wSmAM-PCgD0z2_vdG59VUYn6g1-Gqsc2r5jkDoW7Yx-6wqANzhaByiqtPKlO-A");
-        mTargetList.put("권터", "APA91bGYEDi_ZPEC6T2lGPxUAls90ASSAqjDF2zB9lPYNmSKQMzh3gJssuyz04GxK1DQT7RNVSs5T3nbJme_VaTkXST0DI6y_baUtN4PMLcRHh8dj7dIU0vIZvMwUk5q1_6BB4u32F17PSlJSNhMLylhfOdqja0nNg");
-        mTargetList.put("클로이", "APA91bGM9KAMb2aKJYUmbxp9_w-oRk7NKiWJR8FG7li4ScZq09CO8wscLpUDqkHI8TozLB0f3Jf1-5s-s2v9t9m6dDzR3myZtt0ugZ_I926vOxV2FaQwyUYZY7D-7ya5s23EklsnN6bJNyzDQaC0P2iUF_pEnqLl1Q");
-        mTargetList.put("Angel", "APA91bGl0tL0cjk8PP2kA4EgiVssYPVAqRRwZFJ32U5spS55yUkP7FXlRv9lxtMtKuSj0cNriv14cnz48NuPP7yOgoRVsfmERgEyt3t1CNTO7rstG5KbBUoMPxPicx_02wvnFyfaOoYfaQk0r2orq6uggvH5VUV03w");
-        mTargetList.put("emmily", "APA91bHj2GrBg8aOD3p4Q_zrh6-1L7kPamB5Nmo2s7ynFKzS2oZXiZlrQCWjmznEgQs0rDrN4-e7NIeejIHEmSTU6fkY44vpO-GFlagtq2gRRpPLxqNrGcIStOsYvy2Soiw3kq9ZYSB0SUejLgtNqnq672IX7gSIKw");
-        mTargetList.put("홍(Hong)", "APA91bFiV1SG40xrYA54by0E0zuX2sgJdxJ5MU1mDXFS-Q2-WkGgfkMClk54DC0d2PoQ4vktZqcSE42zeeRTe36GpPO-FprmxA83KdbMIPl5mvvWT3hgEA4_9WWYRQlemqEK0OSijuL19F72x3jl7GBF1dj0oloh1g");
-        mTargetList.put("Park", "APA91bHlyqeJdHWMnWcNzdpSk03KuaTNLhNFYcKiLm0pVWh4Iu8SqauU_fNNr04niIUtcrJUSZ8L0gysuQe9g2ncUBqx8AuWIxLthI7sIu3_OEhWWLSmwUEDF_37nFwroKcXi9Dx6qWE7YoR0wQQC7qqgUjACY6otQ");
-        mTargetList.put("taiwan", "APA91bG9IK0Qn12QmtHGspfJkwu56Ngie23HOCqSHzGr7HOsEAjzPdGhayGrpt6vCwHRMxVBFxSOQlAxgVuhNZJV1UzbcuJnoXFXrP_iHzv8-VN4zTnqAhjTz5DV3bGyIWn_gWXqCE0O4liayQVM8nIm84Lxz8umcg");
-        mTargetList.put("아이린", "APA91bGZ5z9htExdKbCpHOuOoArCykowqdqNQVE2lbkTXLpwUm3n7PttOF4Fa69AQM5qhMd4V5T3VMcnp501WsVQRaWpXA-xZfzRxp9kUYZkmBHfOf2iL9nyfcvgfn7664PombPfVAkbcVAN9-SEu-f4NwUPeQMWiQ");
-        mTargetList.put("Geun", "APA91bHvTXBPJ3AUthtpgyRa9r8SNst8-PDxcov0r19vMtkVAXseJXdAqzlHt95_2iZtGO4TsCpdsJ5VAbZL2AfBd3xkKKt2aY3GYT-Tl4bklwW27Q1OmBD3YVrWHjwSs1ACEFUqgn408EbWsjm-5z5hJIVGA0HKnw");
+        mTargetList.put("스노야", "APA91bFz0GSPUcBdQNTCfT4H83H8jGvWsboUA9RNb1MyObRnhNGI6lfZ8r_J9bgQgf15ha-zxfPSn-tCPhClHxkep9KWDAHmpmXDxhoPDywWln_VZHvQzfaR8JMf5GlMIs8v5ngTEW1CmyRI9mLR4AWGcB9OT3AJGA");
+//        mTargetList.put("멜트", "APA91bH0zkR6P0PtKboTE3xOOM5Ssib3tDFVrzHhBMM_d4iyWs_y9EsUurznqnipxKdbWGLjdgV2s4bK71ORl8_1bjqPmAon8AOMDGLugFYxK8BNEb759qdFuInmwupw7UQDLtErK4L57yPEYToKxvXjw006DS7O7A");
+//        mTargetList.put("에이든", "APA91bFDqjJ-N1EtEehf841I1Ha0nxkdi_iWnqr8sLx_h9X9wldhmCTj32WWRflb8Jkt_iJ_T2MHU6T6xcSZIVIJdaltlSdmlBB6wSmAM-PCgD0z2_vdG59VUYn6g1-Gqsc2r5jkDoW7Yx-6wqANzhaByiqtPKlO-A");
+//        mTargetList.put("권터", "APA91bGYEDi_ZPEC6T2lGPxUAls90ASSAqjDF2zB9lPYNmSKQMzh3gJssuyz04GxK1DQT7RNVSs5T3nbJme_VaTkXST0DI6y_baUtN4PMLcRHh8dj7dIU0vIZvMwUk5q1_6BB4u32F17PSlJSNhMLylhfOdqja0nNg");
+//        mTargetList.put("클로이", "APA91bGM9KAMb2aKJYUmbxp9_w-oRk7NKiWJR8FG7li4ScZq09CO8wscLpUDqkHI8TozLB0f3Jf1-5s-s2v9t9m6dDzR3myZtt0ugZ_I926vOxV2FaQwyUYZY7D-7ya5s23EklsnN6bJNyzDQaC0P2iUF_pEnqLl1Q");
+//        mTargetList.put("Angel", "APA91bGl0tL0cjk8PP2kA4EgiVssYPVAqRRwZFJ32U5spS55yUkP7FXlRv9lxtMtKuSj0cNriv14cnz48NuPP7yOgoRVsfmERgEyt3t1CNTO7rstG5KbBUoMPxPicx_02wvnFyfaOoYfaQk0r2orq6uggvH5VUV03w");
+//        mTargetList.put("emmily", "APA91bHj2GrBg8aOD3p4Q_zrh6-1L7kPamB5Nmo2s7ynFKzS2oZXiZlrQCWjmznEgQs0rDrN4-e7NIeejIHEmSTU6fkY44vpO-GFlagtq2gRRpPLxqNrGcIStOsYvy2Soiw3kq9ZYSB0SUejLgtNqnq672IX7gSIKw");
+//        mTargetList.put("홍(Hong)", "APA91bFiV1SG40xrYA54by0E0zuX2sgJdxJ5MU1mDXFS-Q2-WkGgfkMClk54DC0d2PoQ4vktZqcSE42zeeRTe36GpPO-FprmxA83KdbMIPl5mvvWT3hgEA4_9WWYRQlemqEK0OSijuL19F72x3jl7GBF1dj0oloh1g");
+//        mTargetList.put("Park", "APA91bHlyqeJdHWMnWcNzdpSk03KuaTNLhNFYcKiLm0pVWh4Iu8SqauU_fNNr04niIUtcrJUSZ8L0gysuQe9g2ncUBqx8AuWIxLthI7sIu3_OEhWWLSmwUEDF_37nFwroKcXi9Dx6qWE7YoR0wQQC7qqgUjACY6otQ");
+//        mTargetList.put("taiwan", "APA91bG9IK0Qn12QmtHGspfJkwu56Ngie23HOCqSHzGr7HOsEAjzPdGhayGrpt6vCwHRMxVBFxSOQlAxgVuhNZJV1UzbcuJnoXFXrP_iHzv8-VN4zTnqAhjTz5DV3bGyIWn_gWXqCE0O4liayQVM8nIm84Lxz8umcg");
+//        mTargetList.put("아이린", "APA91bGZ5z9htExdKbCpHOuOoArCykowqdqNQVE2lbkTXLpwUm3n7PttOF4Fa69AQM5qhMd4V5T3VMcnp501WsVQRaWpXA-xZfzRxp9kUYZkmBHfOf2iL9nyfcvgfn7664PombPfVAkbcVAN9-SEu-f4NwUPeQMWiQ");
+//        mTargetList.put("Geun", "APA91bHvTXBPJ3AUthtpgyRa9r8SNst8-PDxcov0r19vMtkVAXseJXdAqzlHt95_2iZtGO4TsCpdsJ5VAbZL2AfBd3xkKKt2aY3GYT-Tl4bklwW27Q1OmBD3YVrWHjwSs1ACEFUqgn408EbWsjm-5z5hJIVGA0HKnw");
+
+        for (String name : mTargetList.keySet())
+            mTargetRegIdList.add(mTargetList.get(name));
     }
 
     private void registerInBackground() {
@@ -128,31 +130,30 @@ public class MainActivity extends ActionBarActivity {
 
     public void onClick(View view) {
         if (view.getId() == R.id.btnSelect) {
-
-            final ArrayList<String> nameList = new ArrayList<String>();
-            for (String name : mTargetList.keySet())
-                nameList.add(name);
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Select Target");
-            builder.setItems(nameList.toArray(new String[0]), new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    String targetName = nameList.get(which);
-                    Button btnSelect = (Button)findViewById(R.id.btnSelect);
-                    btnSelect.setText(targetName);
-                    mTargetRegId = mTargetList.get(targetName);
-                }
-            });
-            builder.show();
+//            final ArrayList<String> nameList = new ArrayList<String>();
+//            for (String name : mTargetList.keySet())
+//                nameList.add(name);
+//
+//            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//            builder.setTitle("Select Target");
+//            builder.setItems(nameList.toArray(new String[0]), new DialogInterface.OnClickListener() {
+//                public void onClick(DialogInterface dialog, int which) {
+//                    String targetName = nameList.get(which);
+//                    Button btnSelect = (Button)findViewById(R.id.btnSelect);
+//                    btnSelect.setText(targetName);
+//                    mTargetRegId = mTargetList.get(targetName);
+//                }
+//            });
+//            builder.show();
         }
         else if (view.getId() == R.id.btnSend) {
-            Log.i(TAG, "Push button clicked!");
-            if (mTargetRegId == null) {
-                Toast toast = Toast.makeText(this, "대상을 지정해 주세요.", Toast.LENGTH_LONG);
-                toast.setGravity(Gravity.CENTER, 0, 0);
-                toast.show();
-                return;
-            }
+//            Log.i(TAG, "Push button clicked!");
+//            if (mTargetRegId == null) {
+//                Toast toast = Toast.makeText(this, "대상을 지정해 주세요.", Toast.LENGTH_LONG);
+//                toast.setGravity(Gravity.CENTER, 0, 0);
+//                toast.show();
+//                return;
+//            }
             EditText edtContent = (EditText)findViewById(R.id.edtContent);
             sendPush(edtContent.getText().toString());
             edtContent.setText("");
@@ -171,7 +172,7 @@ public class MainActivity extends ActionBarActivity {
                         .addData("content", content)
                         .build();
                 try {
-                    sender.send(message, mTargetRegId, 0);
+                    sender.send(message, mTargetRegIdList, 0);
                 } catch (IOException e) {
                     Log.e(TAG, e.toString());
                 }
@@ -179,15 +180,20 @@ public class MainActivity extends ActionBarActivity {
             }
         }.execute();
 
-        createTalk(true, MY_NICK, null, content);
+        TalkModel talk = new TalkModel();
+        talk.author = MY_NICK;
+        talk.content = content;
+        talk.my_talk = true;
+        MyApp.dbHelper.addTalk(talk);
+        addTalk(talk);
+        scrollDown();
     }
 
-    public void createTalk(boolean myTalk, String author, String created, String content)
-    {
+    private void addTalk(TalkModel talk) {
         View item = View.inflate(this, R.layout.item_chat, null);
 
         LinearLayout layoutChat = (LinearLayout)item.findViewById(R.id.layoutChat);
-        if (myTalk) {
+        if (talk.my_talk) {
             FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams)layoutChat.getLayoutParams();
             lp.gravity = Gravity.RIGHT;
             lp.leftMargin = DisplayUtil.PixelFromDP(50);
@@ -205,23 +211,27 @@ public class MainActivity extends ActionBarActivity {
         }
 
         // 작성자
-        if (author != null) {
+        if (talk.author != null) {
             TextView lblAuthor = (TextView)item.findViewById(R.id.lblAuthor);
-            lblAuthor.setText(author);
+            lblAuthor.setText(talk.author);
         }
 
         // 날짜 및 시간
-        SimpleDateFormat formatter = new SimpleDateFormat("MM-dd aa hh:mm:ss");
-        TextView lblDatetime = (TextView)item.findViewById(R.id.lblDatetime);
-        lblDatetime.setText(formatter.format(System.currentTimeMillis()));
+        if (talk.created != null) {
+            TextView lblDatetime = (TextView)item.findViewById(R.id.lblDatetime);
+            lblDatetime.setText(CalUtil.dateToString(talk.created));
+        }
 
         // 메시지
-        TextView lblMessage = (TextView)item.findViewById(R.id.lblMessage);
-        lblMessage.setText(content);
+        if (talk.content != null) {
+            TextView lblMessage = (TextView)item.findViewById(R.id.lblMessage);
+            lblMessage.setText(talk.content);
+        }
 
-        LinearLayout layoutChatList = (LinearLayout)findViewById(R.id.layoutChatList);
         layoutChatList.addView(item);
+    }
 
+    private void scrollDown() {
         scrollChatList.post(new Runnable() {
             public void run() {
                 scrollChatList.fullScroll(ScrollView.FOCUS_DOWN);
@@ -244,7 +254,9 @@ public class MainActivity extends ActionBarActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.menu_delete_all_talk) {
+            MyApp.dbHelper.clearTalkLog();
+            layoutChatList.removeAllViews();
             return true;
         }
 

@@ -25,7 +25,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Message;
-import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -39,7 +38,6 @@ import android.util.Log;
 public class GcmIntentService extends IntentService {
     public static final int NOTIFICATION_ID = 1;
     private NotificationManager mNotificationManager;
-    NotificationCompat.Builder builder;
 
     public GcmIntentService() {
         super("GcmIntentService");
@@ -70,8 +68,10 @@ public class GcmIntentService extends IntentService {
                 Log.i(TAG, "Received: " + extras.toString());
                 TalkModel talk = new TalkModel();
                 talk.author = extras.getString("author");
-                talk.created = extras.getString("created");
+                talk.created = CalUtil.stringToDate(extras.getString("created"));
                 talk.content = extras.getString("content");
+                talk.my_talk = false;
+                MyApp.dbHelper.addTalk(talk);
                 if (MainActivity.mThis != null) {
                     Message msg = MainActivity.mThis.mHandler.obtainMessage();
                     msg.obj = talk;
@@ -89,14 +89,11 @@ public class GcmIntentService extends IntentService {
     // This is just one simple example of what you might choose to do with
     // a GCM message.
     private void sendNotification(String msg) {
-        mNotificationManager = (NotificationManager)
-                this.getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager = (NotificationManager)this.getSystemService(Context.NOTIFICATION_SERVICE);
 
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-                new Intent(), 0);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, new Intent(), 0);
 
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this)
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
         .setSmallIcon(R.mipmap.ic_launcher)
          .setTicker("메시지가 도착했습니다.")
         .setContentTitle("신규 메시지")

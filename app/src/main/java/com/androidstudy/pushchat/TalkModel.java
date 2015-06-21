@@ -5,6 +5,7 @@ import java.util.Date;
 public class TalkModel
 {
 	String author;
-	String created;
+	Date created;
 	String content;
+	boolean my_talk;
 }

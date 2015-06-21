@@ -4,6 +4,7 @@ import android.app.Application;
 
 public class MyApp extends Application
 {
+	public static DbHelper dbHelper;
 	private static boolean activityVisible;
 
 	public static boolean isActivityVisible() {
@@ -22,6 +23,7 @@ public class MyApp extends Application
 	{
 		super.onCreate();
 
+		dbHelper = new DbHelper(this);
 		DeviceUtil.init(this);
 	}
 }
