@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="vertical"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:descendantFocusability="blocksDescendants" >
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:minHeight="80dp"
+		android:paddingLeft="6dp"
+		android:paddingRight="10dp"
+		android:paddingTop="10dp"
+		android:paddingBottom="8dp" >
+	
+		<FrameLayout
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+	        android:layout_gravity="center_vertical" >
+
+		    <com.androidstudy.pushchat.CustomRoundedImageView
+		    	android:id="@+id/imgThumb"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_marginRight="12dp"
+		        android:padding="6dp"
+		        android:scaleType="fitCenter"
+		        android:src="@mipmap/profile02_default"
+		        android:background="@mipmap/profile02" />
+
+		</FrameLayout>
+	
+		<LinearLayout
+			android:orientation="vertical"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:layout_gravity="center_vertical"
+			android:layout_marginLeft="10dp" >
+	
+			<TextView
+				android:id="@+id/lblName"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:singleLine="true"
+				android:textSize="19sp"
+				android:textColor="#000000"
+				android:text="최지수" />
+				
+			<TextView
+				android:id="@+id/lblBirthday"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="2dp"
+				android:singleLine="true"
+				android:textSize="14sp"
+				android:textColor="#5c5e61"
+				android:text="4년11개월 (2014.10.10)" />
+
+			<LinearLayout
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content" >
+					
+				<TextView
+					android:id="@+id/lblNursery"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_weight="1"
+					android:singleLine="true"
+					android:textSize="14sp"
+					android:textColor="#3485ff"
+					android:text="키즈래미안 어린이집" />
+
+				<TextView
+					android:id="@+id/lblWaiting"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_marginLeft="6dp"
+					android:singleLine="true"
+					android:textSize="14sp"
+					android:textColor="#f43740"
+					android:text="" />
+					
+			</LinearLayout>
+
+			<TextView
+				android:id="@+id/lblApprovalStatus"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:singleLine="true"
+				android:textSize="14sp"
+				android:textColor="#5c5e61"
+				android:text="밝은 햇살반" />
+	
+		</LinearLayout>
+		
+	</LinearLayout>
+
+</LinearLayout>
